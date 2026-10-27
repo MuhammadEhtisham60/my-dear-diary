@@ -12,7 +12,7 @@ const app = express();
 
 const origins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map((s) => s.trim());
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: origins, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 if (process.env.NODE_ENV !== 'test') app.use(morgan('dev'));
