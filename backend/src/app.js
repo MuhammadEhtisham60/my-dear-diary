@@ -10,7 +10,13 @@ import { notFound, errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
-const origins = (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map((s) => s.trim());
+const origins = [
+  'http://localhost:5173',
+  'https://my-sweatest-dear-diary.netlify.app',
+  ...(process.env.FRONTEND_URL || '').split(','),
+]
+  .map((s) => s.trim().replace(/\/+$/, ''))
+  .filter(Boolean);
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(cors({ origin: origins, credentials: true }));
