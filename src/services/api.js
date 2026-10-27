@@ -1,7 +1,7 @@
 // ─── API Service Layer ─────────────────────────────────────────────────────
 // Real HTTP calls to the Chronicle backend (see BACKEND_PLAN.md).
 // Exported function names and return shapes match the previous mock layer.
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://my-dear-diary-6jhb.vercel.app/api';
 
 async function request(endpoint, { method = 'GET', body, params } = {}) {
   const token = localStorage.getItem('chronicle_token');
