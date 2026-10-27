@@ -35,11 +35,11 @@ export default function Header({ onMenuClick }) {
       </button>
 
       {/* Page title */}
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+      <div className="header-titles" style={{ flex: 1, minWidth: 0 }}>
+        <div className="truncate" style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
           {pageInfo.title}
         </div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+        <div className="header-subtitle truncate" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
           {pageInfo.subtitle} · {today}
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function Header({ onMenuClick }) {
           style={{ gap: '0.4rem' }}
         >
           <Plus size={15} />
-          <span style={{ display: window.innerWidth < 640 ? 'none' : 'inline' }}>Write</span>
+          <span className="header-write-label">Write</span>
         </button>
 
         {/* Theme */}
@@ -78,7 +78,7 @@ export default function Header({ onMenuClick }) {
         </button>
 
         {/* Notifications */}
-        <button className="btn btn-ghost btn-icon relative" title="Notifications" id="notifications-btn">
+        <button className="btn btn-ghost btn-icon relative header-bell" title="Notifications" id="notifications-btn">
           <Bell size={18} />
           <span style={{
             position: 'absolute', top: 6, right: 6,
