@@ -2,6 +2,7 @@
 import 'dotenv/config';
 import mongoose from 'mongoose';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import app from '../src/app.js';
 import connectDB from '../src/config/db.js';
 import User from '../src/models/User.js';
@@ -67,6 +68,22 @@ async function run() {
     ok(r.status === 401, 'no token → 401');
     r = await api('POST', '/auth/forgot-password', { email });
     ok(r.status === 200 && r.data.message, 'forgot-password');
+    const otpUser = await User.findOne({ email }).select('+resetOtpHash +resetOtpExpires');
+    ok(Boolean(otpUser.resetOtpHash && otpUser.resetOtpExpires), 'forgot-password stores hashed OTP');
+    const knownOtp = '123456';
+    otpUser.resetOtpHash = crypto.createHash('sha256').update(knownOtp).digest('hex');
+    await otpUser.save();
+    r = await api('POST', '/auth/verify-otp', { email, otp: '000000' });
+    ok(r.status === 400, 'verify-otp wrong code → 400');
+    r = await api('POST', '/auth/verify-otp', { email, otp: knownOtp });
+    ok(r.status === 200 && r.data.valid === true, 'verify-otp valid code → 200');
+    r = await api('POST', '/auth/reset-password', { email, otp: knownOtp, newPassword: 'resetpass1' });
+    ok(r.status === 200 && r.data.message, 'reset-password → 200');
+    r = await api('POST', '/auth/login', { email, password: 'resetpass1' });
+    ok(r.status === 200 && r.data.token, 'login with reset password');
+    token = r.data.token;
+    r = await api('PUT', '/users/change-password', { currentPassword: 'resetpass1', newPassword: 'secret1' });
+    ok(r.status === 200, 'restore test password');
     r = await api('POST', '/auth/logout');
     ok(r.status === 200 && r.data.success === true, 'logout');
 

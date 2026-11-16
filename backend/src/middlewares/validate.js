@@ -3,6 +3,7 @@ import { MOOD_IDS } from '../models/Entry.js';
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const OTP_RE = /^\d{6}$/;
 
 const isValidDate = (s) => DATE_RE.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 
@@ -30,6 +31,21 @@ export const validateLogin = check(({ body }) => {
 export const validateForgot = check(({ body }) => {
   if (!str(body.email)) return 'Email is required.';
   if (!EMAIL_RE.test(body.email)) return 'Please provide a valid email address.';
+  return null;
+});
+
+export const validateVerifyOtp = check(({ body }) => {
+  if (!str(body.email) || !str(body.otp)) return 'Email and OTP are required.';
+  if (!EMAIL_RE.test(body.email)) return 'Please provide a valid email address.';
+  if (!OTP_RE.test(body.otp.trim())) return 'OTP must be a 6-digit code.';
+  return null;
+});
+
+export const validateResetPassword = check(({ body }) => {
+  if (!str(body.email) || !str(body.otp) || !str(body.newPassword)) return 'Email, OTP, and new password are required.';
+  if (!EMAIL_RE.test(body.email)) return 'Please provide a valid email address.';
+  if (!OTP_RE.test(body.otp.trim())) return 'OTP must be a 6-digit code.';
+  if (body.newPassword.length < 6) return 'New password must be at least 6 characters.';
   return null;
 });
 

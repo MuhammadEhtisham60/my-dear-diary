@@ -48,6 +48,19 @@ const UserSchema = new mongoose.Schema({
     enum: ['light', 'dark', 'system'],
     default: 'light',
   },
+  resetOtpHash: {
+    type: String,
+    select: false,
+  },
+  resetOtpExpires: {
+    type: Date,
+    select: false,
+  },
+  resetOtpAttempts: {
+    type: Number,
+    default: 0,
+    select: false,
+  },
 }, {
   timestamps: true,
 });
@@ -70,6 +83,9 @@ UserSchema.set('toJSON', {
     delete ret._id;
     delete ret.__v;
     delete ret.password;
+    delete ret.resetOtpHash;
+    delete ret.resetOtpExpires;
+    delete ret.resetOtpAttempts;
     return ret;
   },
 });

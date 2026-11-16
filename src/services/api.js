@@ -47,6 +47,12 @@ export const authApi = {
   async forgotPassword(email) {
     return request('/auth/forgot-password', { method: 'POST', body: { email } });
   },
+  async verifyOtp(email, otp) {
+    return request('/auth/verify-otp', { method: 'POST', body: { email, otp } });
+  },
+  async resetPassword(email, otp, newPassword) {
+    return request('/auth/reset-password', { method: 'POST', body: { email, otp, newPassword } });
+  },
   async logout() {
     try { await request('/auth/logout', { method: 'POST' }); } catch { /* token is discarded client-side anyway */ }
     return true;
