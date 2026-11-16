@@ -483,7 +483,7 @@ a:hover { color: var(--accent-hover); }
 .form-error { font-size: 0.75rem; color: var(--terra-500); }
 .input-group { position: relative; }
 .input-icon { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
-.input-icon-right { left: auto; right: 0.75rem; }
+.input-icon-right { left: auto; right: 0.75rem; pointer-events: auto; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
 .input-group .form-input { padding-left: 2.5rem; }
 .input-group .has-right-icon { padding-right: 2.5rem; }
 
