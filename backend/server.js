@@ -9,6 +9,6 @@ connectDB()
     app.listen(PORT, () => console.log(`🚀 Chronicle API running on http://localhost:${PORT}`));
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection failed:', err.message);
+    console.error('❌ PostgreSQL connection failed:', err.message);
     process.exit(1);
   });

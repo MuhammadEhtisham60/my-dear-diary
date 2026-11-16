@@ -13,12 +13,15 @@ export function errorHandler(err, req, res, next) {
     status = 400;
     errors = Object.values(err.errors).map((e) => e.message);
     message = errors[0];
-  } else if (err.code === 11000) {
+  } else if (err.code === 11000 || err.code === '23505') {
     status = 409;
     message = 'An account with this email already exists.';
-  } else if (err.name === 'CastError') {
+  } else if (err.name === 'CastError' || err.code === '22P02') {
     status = 400;
     message = 'Invalid ID or value format.';
+  } else if (err.code === '23514') {
+    status = 400;
+    message = 'Invalid field value.';
   } else if (err.type === 'entity.parse.failed') {
     status = 400;
     message = 'Invalid JSON body.';

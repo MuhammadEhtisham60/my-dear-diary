@@ -1,13 +1,10 @@
 // End-to-end API test. Run after setting the real password in .env:  npm test
 import 'dotenv/config';
-import mongoose from 'mongoose';
 import http from 'node:http';
 import crypto from 'node:crypto';
 import app from '../src/app.js';
-import connectDB from '../src/config/db.js';
+import connectDB, { disconnectDB, query } from '../src/config/db.js';
 import User from '../src/models/User.js';
-import Entry from '../src/models/Entry.js';
-import Note from '../src/models/Note.js';
 
 let pass = 0, fail = 0;
 const ok = (cond, name, extra = '') => {
@@ -47,7 +44,7 @@ async function run() {
     ok(r.status === 201 && r.data.token && r.data.user.email === email, 'signup success → 201 {user, token}');
     ok(!('password' in r.data.user), 'password not returned');
     token = r.data.token;
-    const stored = await User.findOne({ email }).select('+password');
+    const stored = await User.findByEmail(email, { withSecrets: true });
     ok(stored.password !== 'secret1' && stored.password.startsWith('$2'), 'password stored hashed');
     r = await api('POST', '/auth/signup', { name: 'Test', email, password: 'secret1' });
     ok(r.status === 409, 'duplicate signup → 409');
@@ -68,11 +65,13 @@ async function run() {
     ok(r.status === 401, 'no token → 401');
     r = await api('POST', '/auth/forgot-password', { email });
     ok(r.status === 200 && r.data.message, 'forgot-password');
-    const otpUser = await User.findOne({ email }).select('+resetOtpHash +resetOtpExpires');
+    const otpUser = await User.findByEmail(email, { withSecrets: true });
     ok(Boolean(otpUser.resetOtpHash && otpUser.resetOtpExpires), 'forgot-password stores hashed OTP');
     const knownOtp = '123456';
-    otpUser.resetOtpHash = crypto.createHash('sha256').update(knownOtp).digest('hex');
-    await otpUser.save();
+    await User.setResetOtp(otpUser.id, {
+      hash: crypto.createHash('sha256').update(knownOtp).digest('hex'),
+      expires: new Date(Date.now() + 10 * 60 * 1000),
+    });
     r = await api('POST', '/auth/verify-otp', { email, otp: '000000' });
     ok(r.status === 400, 'verify-otp wrong code → 400');
     r = await api('POST', '/auth/verify-otp', { email, otp: knownOtp });
@@ -102,7 +101,7 @@ async function run() {
     ok(r.status === 201 && e2.isFavorite === true, 'create 2nd entry (favorite)');
     r = await api('GET', `/entries/${e1.id}`);
     ok(r.status === 200 && r.data.entry.title === 'First', 'get by id');
-    r = await api('GET', '/entries/64b000000000000000000000');
+    r = await api('GET', '/entries/00000000-0000-0000-0000-000000000000');
     ok(r.status === 404, 'get missing → 404');
     r = await api('GET', '/entries/not-an-id');
     ok(r.status === 400, 'get malformed id → 400');
@@ -195,13 +194,9 @@ async function run() {
     r = await api('GET', '/nope');
     ok(r.status === 404, 'unknown route → 404');
   } finally {
-    const users = await User.find({ email: /@chronicle\.test$/ });
-    const ids = users.map((u) => u._id);
-    await Entry.deleteMany({ userId: { $in: ids } });
-    await Note.deleteMany({ userId: { $in: ids } });
-    await User.deleteMany({ _id: { $in: ids } });
+    await query("DELETE FROM users WHERE email LIKE '%@chronicle.test'");
     server.close();
-    await mongoose.disconnect();
+    await disconnectDB();
   }
   console.log(`\nResult: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

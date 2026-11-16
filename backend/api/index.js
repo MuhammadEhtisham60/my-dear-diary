@@ -11,7 +11,7 @@ export default async function handler(req, res) {
     await dbPromise;
   } catch (err) {
     dbPromise = undefined;
-    console.error('MongoDB connection failed:', err.message);
+    console.error('PostgreSQL connection failed:', err.message);
     return res.status(500).json({ message: 'Database connection failed' });
   }
   return app(req, res);

@@ -1,6 +1,5 @@
 import 'dotenv/config';
-import mongoose from 'mongoose';
-import connectDB from './config/db.js';
+import connectDB, { disconnectDB, query } from './config/db.js';
 import User from './models/User.js';
 import Entry, { MOOD_IDS } from './models/Entry.js';
 import Note from './models/Note.js';
@@ -40,17 +39,16 @@ const addDays = (base, n) => { const d = new Date(base); d.setUTCDate(d.getUTCDa
 
 export async function seed() {
   await connectDB();
-  await Promise.all([User.deleteMany({ email: DEMO_USER.email })]);
+  await query('DELETE FROM users WHERE email = $1', [DEMO_USER.email]);
   const user = await User.create(DEMO_USER);
   const today = new Date();
 
-  // 28 entries: last 12 days consecutive (active streak), then every other day
   const offsets = [];
   for (let i = 0; i < 12; i++) offsets.push(i);
   for (let i = 13; i < 13 + 16 * 2; i += 2) offsets.push(i);
 
   const entries = offsets.map((off, i) => ({
-    userId: user._id,
+    userId: user.id,
     title: TITLES[i % TITLES.length],
     content: CONTENT[i % CONTENT.length],
     date: fmt(addDays(today, -off)),
@@ -59,7 +57,6 @@ export async function seed() {
     isFavorite: i % 4 === 0,
     isDraft: i === 5,
   }));
-  // Use save() path via create so wordCount hook runs
   for (const e of entries) await Entry.create(e);
 
   const notes = [
@@ -69,15 +66,14 @@ export async function seed() {
     { title: 'Start reading "A Gentleman in Moscow"', description: 'Pick up where I left off — Chapter 6.', date: fmt(addDays(today, 2)), reminderTime: '20:00', completed: false, tags: ['Books'], priority: 'low' },
     { title: 'Weekend hiking trip preparation', description: 'Pack gear, download offline maps, check weather forecast.', date: fmt(addDays(today, 4)), reminderTime: '07:00', completed: false, tags: ['Fitness', 'Nature'], priority: 'medium' },
     { title: 'Renew gym membership', description: 'Expires soon.', date: fmt(addDays(today, 7)), reminderTime: '09:00', completed: false, tags: ['Fitness', 'Health'], priority: 'medium' },
-  ].map((n) => ({ ...n, userId: user._id }));
-  await Note.insertMany(notes);
+  ].map((n) => ({ ...n, userId: user.id }));
+  for (const n of notes) await Note.create(n);
 
   console.log(`🌱 Seeded user ${DEMO_USER.email} (password: ${DEMO_USER.password}), ${entries.length} entries, ${notes.length} notes`);
 }
 
-// Run directly: `npm run seed`
 if (process.argv[1]?.endsWith('seed.js')) {
   seed()
     .catch((e) => { console.error('Seed failed:', e.message); process.exitCode = 1; })
-    .finally(() => mongoose.disconnect());
+    .finally(() => disconnectDB());
 }
